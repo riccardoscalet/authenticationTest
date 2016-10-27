@@ -1,10 +1,11 @@
 import {
     Plugin
 } from "./plugin";
-var levelup = require("levelup");
+import * as Joi from "joi";
+
+const levelup = require("levelup");
 
 export class LoginPlugin extends Plugin {
-
     db: LevelUp;
 
     constructor(public options: any) {
@@ -18,67 +19,49 @@ export class LoginPlugin extends Plugin {
 
     _register(server, options) {
         server.route({
-            method: 'GET',
-            path: '/addUser/{user}',
-            handler: this.addUser
+            method: 'POST',
+            path: '/login',
+            handler: this.login,
+            config: {
+                validate: {
+                    payload: {
+                        user: Joi.string().required(),
+                        password: Joi.string().required()
+                    }
+                }
+            }
         })
-
-        server.route({
-            method: 'GET',
-            path: '/login/{user}',
-            handler: this.login
-        })
-
-        server.route({
-            method: 'GET',
-            path: '/getAllUsers',
-            handler: this.getAllUsers
-        })
-    }
-
-    addUser(request, reply) {
-        let newUser = request.params.user;
-        this.db.put(newUser, newUser, function (err) {
-            reply("User added.");
-        });
-    }
-
-    getAllUsers(request, reply) {
-        let returnData;
-
-        this.db.createReadStream()
-            .on('data', function (data) {
-                returnData += data;
-            }).on('end', function () {
-                reply(returnData);
-            })
     }
 
     login(request, reply) {
-        let loginUser = request.params.user;
-        this.db.get(loginUser, function (err, value) {
-            // if (err) {
-            //     if (err.type == 'NotFoundError') {
-            //         return reply({
-            //             result: 1,
-            //             message: "User does not exist."
-            //         });
-            //     }
+        let credentials = {
+            user: request.payload.user,
+            password: request.payload.password
+        };
 
-            //     return reply({
-            //         result: -1,
-            //         message: "Error occurred!",
-            //         error: err
-            //     });
-            // }
+        this.db.get(credentials.user, function (err, value) {
+            if (err) {
+                if (err.notFound) {
+                    return reply({
+                        result: 2,
+                        message: "User does not exist."
+                    });
+                }
+
+                return reply({
+                    result: -1,
+                    message: "Error occurred!",
+                    error: err
+                });
+            }
 
             if (value) return reply({
                 result: 0,
-                message: "Login successful!"
+                message: "Login successful."
             });
 
             return reply({
-                result: 2,
+                result: 1,
                 message: "Login failed."
             });
         });

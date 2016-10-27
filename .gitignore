@@ -29,5 +29,8 @@ db
 .nyc_output
 
 # User defined
-/typings
-/user.db
+typings
+user.db
+plugins/*.js
+plugins/*.js.map
+
