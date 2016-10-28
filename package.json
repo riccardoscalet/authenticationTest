@@ -30,7 +30,7 @@
   "dependencies": {
     "core-js": "^2.4.1",
     "hapi": "^15.1.1",
-    "hapi-auth-basic": "^4.2.0",
+    "hapi-auth-cookie": "^6.1.1",
     "joi": "^9.2.0",
     "level-promise": "^2.1.1",
     "leveldown": "^1.5.0",
