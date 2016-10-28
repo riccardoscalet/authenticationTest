@@ -31,6 +31,8 @@ db
 # User defined
 typings
 user.db
+*.js.map
+model/*.js
 plugins/*.js
-plugins/*.js.map
+services/*.js
 

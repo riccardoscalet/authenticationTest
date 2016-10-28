@@ -9,7 +9,9 @@ const levelup = require('levelup');
 const defaults = {
     port: 8989
 }
-var loginPlugin = require('./plugins/loginplugin');
+var UsersService = require('./services/users.service').UsersService;
+var loginPlugin = require('./plugins/login.plugin');
+var usersPlugin = require('./plugins/users.plugin');
 
 function build(opts, cb) {
     opts = xtend(defaults, opts)
@@ -17,9 +19,9 @@ function build(opts, cb) {
     const server = new Hapi.Server()
 
     var db = levelup("./user.db");
-    var loginPluginObj = new loginPlugin.LoginPlugin({
-        db: db
-    });
+    var usersServiceObj = new UsersService(db);
+    var loginPluginObj = new loginPlugin.LoginPlugin(usersServiceObj);
+    var usersPluginObj = new usersPlugin.UsersPlugin(usersServiceObj);
 
     server.connection({
         port: opts.port
@@ -27,9 +29,10 @@ function build(opts, cb) {
 
     // Registers plugins to expose on server
     server.register(
-        [{
-            register: loginPluginObj.register
-        }], (err) => {
+        [
+            loginPluginObj,
+            usersPluginObj
+        ], (err) => {
             cb(err, server)
         })
 
