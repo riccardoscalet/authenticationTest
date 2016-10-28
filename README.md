@@ -1,2 +1,2 @@
 # authenticationTest
-Authentication test using hapi, passport, and levelup.
+Authentication test using hapi and levelup.

@@ -7,7 +7,6 @@ import {
 import {
     UsersService
 } from "../services/users.service";
-const passport = require("passport");
 import * as Joi from "joi";
 
 export class UsersPlugin extends Plugin {
@@ -46,22 +45,15 @@ export class UsersPlugin extends Plugin {
     addUser(request, reply) {
         let newUser = new User(request.params.user, request.payload.password);
 
-        passport.authenticate('local', {
-                failureRedirect: '/login'
-            }),
-            function (request, reply) {
-                this.usersService.add(newUser, function (err) {
-                    reply(err);
-                });
-
-                // function (err) {
-                //     reply({
-                //         result: 0,
-                //         message: "User added."
-                //     });
-                // };
-            }
+        this.usersService.add(newUser, function (err) {
+            if (err) return reply(err);
+            else return reply({
+                result: 0,
+                message: "User added."
+            });
+        });
     }
+
 
     getAllUsers(request, reply) {
         this.usersService.getAll(function (data) {
