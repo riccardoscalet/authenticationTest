@@ -18,11 +18,6 @@ export class LoginPlugin extends Plugin {
     }
 
     _register(server, options) {
-        const cache = server.cache({
-            segment: "sessions",
-            expiresIn: 3 * 24 * 60 * 60 * 1000
-        });
-        server.app.cache = cache;
 
         server.register(auth, function (err) {
             if (err) throw err;
@@ -34,45 +29,26 @@ export class LoginPlugin extends Plugin {
             ttl: 24 * 60 * 60 * 1000, // Set session to 1 day
             // redirectTo: "/login",
             isSecure: false,
-            validateFunc: function (request, session, callback) {
-                cache.get(session.username, (err, cached) => {
-                    if (err) return callback(err, false);
-                    if (!cached) return callback(null, false);
-                    return callback(null, true, cached.account);
-                });
-            }
         });
 
         server.route({
-            method: 'POST',
+            method: 'GET',
             path: '/login',
             config: {
                 validate: {
-                    payload: {
+                    query: {
                         username: Joi.string().required().alphanum(),
                         password: Joi.string().required()
                     }
                 },
-                // auth: {
-                //     mode: "try"
-                // },
-                // plugins: {
-                //     "hapi-auth-cookie": {
-                //         redirectTo: false
-                //     }
-                // },
                 handler: function (request, reply) {
                     this.login(
-                        request.payload.username,
-                        request.payload.password,
+                        request.query.username,
+                        request.query.password,
                         function (err, isValid, user) {
                             if (isValid && !err) {
-                                request.server.app.cache.set(user.username, user, 0,
-                                    (err) => {
-                                        request.cookieAuth.set(user);
-                                        return reply(`Login successful.\r\nWelcome ${user.username}!`);
-                                    });
-
+                                request.cookieAuth.set(user);
+                                return reply(`Login successful.\r\nWelcome ${user.username}!`);
                             } else {
                                 return reply(err);
                             }
@@ -82,7 +58,7 @@ export class LoginPlugin extends Plugin {
         })
 
         server.route({
-            method: 'POST',
+            method: 'GET',
             path: '/logout',
             config: {
                 auth: "cookieAuth",

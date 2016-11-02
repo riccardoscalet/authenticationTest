@@ -22,8 +22,8 @@ export class UsersPlugin extends Plugin {
         server.route({
             method: 'PUT',
             path: '/users/{user}',
-            handler: this.addUser,
             config: {
+                auth: "cookieAuth",
                 validate: {
                     params: {
                         user: Joi.string().required().alphanum()
@@ -31,14 +31,18 @@ export class UsersPlugin extends Plugin {
                     payload: {
                         password: Joi.string().required()
                     }
-                }
+                },
+                handler: this.addUser,
             }
         })
 
         server.route({
             method: 'GET',
             path: '/users',
-            handler: this.getAllUsers
+            config: {
+                auth: "cookieAuth",
+                handler: this.getAllUsers
+            }
         })
     }
 
