@@ -60,7 +60,7 @@ export class UsersPlugin extends Plugin {
 
 
     getAllUsers(request, reply) {
-        this.usersService.getAll(function (data) {
+        this.usersService.getAll(function (err, data) {            
             reply(data);
         });
     }

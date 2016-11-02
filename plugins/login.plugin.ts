@@ -82,7 +82,9 @@ export class LoginPlugin extends Plugin {
                     username: username
                 }
                 return callback(null, true, user)
-            } else return callback("Login failed. Incorrect password.", false);
+            } else {
+                return callback("Login failed. Incorrect password.", false);
+            }
         });
     }
 
