@@ -23,7 +23,6 @@ export class UsersPlugin extends Plugin {
             method: 'PUT',
             path: '/users/{user}',
             config: {
-                auth: "cookieAuth",
                 validate: {
                     params: {
                         user: Joi.string().required().alphanum()
@@ -40,7 +39,6 @@ export class UsersPlugin extends Plugin {
             method: 'GET',
             path: '/users',
             config: {
-                auth: "cookieAuth",
                 handler: this.getAllUsers
             }
         })
@@ -60,7 +58,7 @@ export class UsersPlugin extends Plugin {
 
 
     getAllUsers(request, reply) {
-        this.usersService.getAll(function (err, data) {            
+        this.usersService.getAll(function (err, data) {
             reply(data);
         });
     }
