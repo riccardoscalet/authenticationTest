@@ -88,7 +88,7 @@ export class LoginPlugin extends Plugin {
                         sessionInfo,
                         authKey, {
                             algorithm: "HS256",
-                            expiresIn: 60 * 60
+                            expiresIn: authTtlSeconds
                         });
 
                     this.login(
