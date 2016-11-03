@@ -44,6 +44,7 @@ export class LoginPlugin extends Plugin {
             if (err) throw err;
         });
         server.auth.strategy("cookieAuth", "cookie", {
+            path: "/",
             password: authKey, // Cookie secret key
             cookie: "apollo-authentication-token", // Cookie name
             ttl: authTtlSeconds * 1000, // Time-To-Live of cookie set to 1 hour
@@ -73,7 +74,8 @@ export class LoginPlugin extends Plugin {
                 validate: {
                     payload: {
                         username: Joi.string().required().alphanum(),
-                        password: Joi.string().required()
+                        password: Joi.string().required(),
+                        cookie: Joi.bool().default(true)
                     }
                 },
                 handler: function (request, reply) {
@@ -91,9 +93,7 @@ export class LoginPlugin extends Plugin {
                             expiresIn: authTtlSeconds
                         });
 
-                    this.login(
-                        username,
-                        password,
+                    this.login(username, password,
                         function (err, isValid, user) {
                             if (isValid && !err) {
                                 request.cookieAuth.set(sessionInfo);
