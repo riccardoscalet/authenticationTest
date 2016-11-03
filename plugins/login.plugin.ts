@@ -1,18 +1,20 @@
+import * as Joi from "joi";
+const levelup = require("levelup");
+const auth = require('hapi-auth-cookie');
+const authToken = require('hapi-auth-jwt2');
+const jwt = require('jsonwebtoken');
+
 import {
     Plugin
 } from "./plugin";
 import {
     UsersService
 } from "../services/users.service";
-import * as Joi from "joi";
 
-const levelup = require("levelup");
-const auth = require('hapi-auth-cookie');
-const authToken = require('hapi-auth-jwt2');
-const jwt = require('jsonwebtoken');
 
 const authKey = "supersecretpasswordsadaaddsdadsdsadadsaddadsadsadadadd";
 const authTtlSeconds = 60 * 60;
+
 
 export class LoginPlugin extends Plugin {
     constructor(private usersService: UsersService, public options: any) {
@@ -22,13 +24,17 @@ export class LoginPlugin extends Plugin {
         });
     }
 
+
     _register(server, options) {
         this.registerAuthenticationStrategies(server);
         this.registerRoutes(server);
     }
 
+
     registerAuthenticationStrategies(server) {
 
+        // Initializes JWT token authentication strategy.
+        //      The client has to embed this token into the "Authorization" header of every subsequent REST call to server.
         server.register(authToken, function (err) {
             if (err) throw err;
         });
@@ -40,6 +46,10 @@ export class LoginPlugin extends Plugin {
             }
         });
 
+        // Initializes cookie token authentication strategy.
+        //      This strategy automatically stores the token inside a cookie on client.
+        //      The browser takes care of sending the cookie to every subsequent REST call to server (inside "Cookie header).
+        //      (This token is different from the JWT one, as the algorithm is different)
         server.register(auth, function (err) {
             if (err) throw err;
         });
@@ -58,19 +68,23 @@ export class LoginPlugin extends Plugin {
         })
     }
 
+    // This method is reached only if token is valid.
+    tokenValidation(decoded, request, callback) {
+        return callback(null, true);
+    };
+
+
     registerRoutes(server) {
 
         server.route({
             method: 'POST',
             path: '/login',
             config: {
-                // Disables authentication for this route: login is meant to get the token!
+
+                // Disables authentication for this route: login is used to obtain the token!
                 auth: false,
-                // Configures how this route manages the state (cookie on client). 
-                state: {
-                    parse: true,
-                    failAction: "log"
-                },
+
+                // Validates parameters
                 validate: {
                     payload: {
                         username: Joi.string().required().alphanum(),
@@ -78,36 +92,8 @@ export class LoginPlugin extends Plugin {
                         cookie: Joi.bool().default(true)
                     }
                 },
-                handler: function (request, reply) {
-                    let username: string = request.payload.username;
-                    let password: string = request.payload.password;
 
-                    let sessionInfo = {
-                        username: username
-                    };
-
-                    var token = jwt.sign(
-                        sessionInfo,
-                        authKey, {
-                            algorithm: "HS256",
-                            expiresIn: authTtlSeconds
-                        });
-
-                    this.login(username, password,
-                        function (err, isValid, user) {
-                            if (isValid && !err) {
-                                request.cookieAuth.set(sessionInfo);
-                                return reply(
-                                    `Login successful.\r\n` +
-                                    `Welcome ${user.username}!\r\n` +
-                                    `\r\n` +
-                                    `Your Token:\r\n` +
-                                    `${token}`);
-                            } else {
-                                return reply(err);
-                            }
-                        });
-                }
+                handler: this.login
             }
         })
 
@@ -119,24 +105,65 @@ export class LoginPlugin extends Plugin {
                     // Logout only makes sense if client is using cookies
                     strategy: "cookieAuth"
                 },
-                handler: function (request, reply) {
-                    // Flag isAuthenticated is true only if this call was validated with auth
-                    if (request.auth.isAuthenticated) {
-                        // Session credentials
-                        var session = request.auth.credentials;
-                    }
-
-                    request.cookieAuth.clear();
-
-                    return reply(`Logout Successful. Goodbye ${session.username}!`);
-                }
+                handler: this.logout
             }
-        })
+        });
     }
 
 
+    login(request, reply) {
+        let username: string = request.payload.username;
+        let password: string = request.payload.password;
 
-    login(username, password, callback) {
+        this.loginDb(username, password, function (err, loginSuccessful, user) {
+
+            if (loginSuccessful && !err) {
+
+                // Sets cookie (containing the token) on client request
+                request.cookieAuth.set(user);
+
+                // Creates JWT token 
+                var token = jwt.sign(
+                    user,
+                    authKey, {
+                        algorithm: "HS256",
+                        expiresIn: authTtlSeconds
+                    });
+
+                return reply({
+                    result: 0,
+                    token: token,
+                    message: `Login successful.\r\n` +
+                        `Welcome ${user.username}!`,
+                });
+            }
+
+            return reply({
+                result: -1,
+                message: err
+            });
+
+        });
+    }
+
+    logout(request, reply) {
+        // Flag isAuthenticated is true only if this call was validated with hapi auth
+        if (request.auth.isAuthenticated) {
+            // Gets session credentials from client request
+            var session = request.auth.credentials;
+        }
+
+        // Deletes cookie from client
+        request.cookieAuth.clear();
+
+        return reply({
+            result: 0,
+            message: `Logout Successful.\r\n` +
+                `Goodbye ${session.username}!`
+        });
+    }
+
+    loginDb(username, password, callback) {
         this.usersService.get(username, function (err, value) {
             if (err) {
                 if (err.notFound) return callback("User does not exist.", false);
@@ -154,7 +181,4 @@ export class LoginPlugin extends Plugin {
         });
     }
 
-    tokenValidation(decoded, request, callback) {
-        return callback(null, true);
-    };
 }

@@ -1,7 +1,6 @@
 import {
     User
 } from "../model/user";
-const level = require("level-promise");
 
 export class UsersService {
 

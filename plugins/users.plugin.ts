@@ -1,3 +1,5 @@
+import * as Joi from "joi";
+
 import {
     Plugin
 } from "./plugin";
@@ -7,7 +9,7 @@ import {
 import {
     UsersService
 } from "../services/users.service";
-import * as Joi from "joi";
+
 
 export class UsersPlugin extends Plugin {
 
@@ -28,7 +30,8 @@ export class UsersPlugin extends Plugin {
                         user: Joi.string().required().alphanum()
                     },
                     payload: {
-                        password: Joi.string().required()
+                        password: Joi.string().required(),
+                        scope: Joi.array().items(Joi.string()).required()
                     }
                 },
                 handler: this.addUser,
@@ -44,14 +47,22 @@ export class UsersPlugin extends Plugin {
         })
     }
 
+
     addUser(request, reply) {
-        let newUser = new User(request.params.user, request.payload.password);
+        let newUser = new User(
+            request.params.user,
+            request.payload.password,
+            request.payload.scope);
 
         this.usersService.add(newUser, function (err) {
-            if (err) return reply(err);
-            else return reply({
+            if (err) return reply({
+                result: -1,
+                message: err
+            });
+
+            return reply({
                 result: 0,
-                message: "User added."
+                message: `User ${newUser.username} added successfully.`
             });
         });
     }
@@ -59,7 +70,15 @@ export class UsersPlugin extends Plugin {
 
     getAllUsers(request, reply) {
         this.usersService.getAll(function (err, data) {
-            reply(data);
+            if (err) return reply({
+                result: -1,
+                message: err
+            });
+
+            return reply({
+                result: 0,
+                data: data
+            });
         });
     }
 
