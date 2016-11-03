@@ -87,6 +87,15 @@ export class LoginPlugin extends Plugin {
         })
 
         server.route({
+            method: 'POST',
+            path: '/login/localhost',
+            config: {
+                auth: false,
+                handler: this.loginLocalhost
+            }
+        })
+
+        server.route({
             method: ['GET', 'POST'],
             path: '/logout',
             config: {
@@ -97,40 +106,24 @@ export class LoginPlugin extends Plugin {
 
 
     login(request, reply) {
+        let self = this;
+
         let username: string = request.payload.username;
         let password: string = request.payload.password;
 
         this.validateCredentials(username, password, function(err, loginSuccessful, user) {
 
-            // Login is always successful from localhost
-            if (!loginSuccessful && request.info.remoteAddress == "127.0.0.1") {
-                user = {
-                    username: "Banana God",
-                    password: "GuessWhatYesBanana",
-                    scope: ["admin"]
-                }
-
-                loginSuccessful = true;
-                err = null;
-            }
-
             // Calculates and returns token if login was successful
             if (loginSuccessful && !err) {
 
-                // Creates JWT token 
-                let token: string = jwt.sign(
-                    user,
-                    authKey, {
-                        algorithm: "HS256",
-                        expiresIn: authTtlSeconds
-                    });
+                // Creates JWT token
+                let token = self.createToken(user);
 
                 // Replies with token and sets the cookie on client
                 return reply({
                     result: 0,
                     token: token,
-                    message: `Login successful.\r\n` +
-                        `Welcome ${user.username}!`,
+                    message: `Login successful. Welcome ${user.username}!`,
                 }).state("token", token);
             }
 
@@ -140,6 +133,35 @@ export class LoginPlugin extends Plugin {
                 message: err
             });
 
+        });
+    }
+
+    loginLocalhost(request, reply) {
+
+        //TODO Can the client counterfeit remoteAddress? In that case, remove this method!!!
+
+        // Login is always successful from localhost
+        if (request.info.remoteAddress == "127.0.0.1") {
+            let user: User = {
+                username: "Banana God Administrator",
+                password: "GuessWhatYesBanana",
+                email: "banana@banana.org",
+                scope: ["admin", "bananaman"]
+            }
+
+            let token = this.createToken(user);
+
+            // Replies with token and sets the cookie on client
+            return reply({
+                result: 0,
+                token: token,
+                message: `Login successful. Welcome ${user.username}!`,
+            }).state("token", token);
+        }
+
+        // Returns error if login failed
+        return reply({
+            result: -1
         });
     }
 
@@ -153,8 +175,7 @@ export class LoginPlugin extends Plugin {
         // Clears cookie on client
         return reply({
             result: 0,
-            message: `Logout Successful.\r\n` +
-                `Goodbye ${session.username}!`
+            message: `Logout successful. Goodbye ${session.username}!`
         }).unstate("token");
     }
 
@@ -174,5 +195,17 @@ export class LoginPlugin extends Plugin {
             return callback("Login failed. Incorrect password.", false);
         });
     }
+
+    // Creates JWT token 
+    createToken(user: User) {
+        let token: string = jwt.sign(
+            user,
+            authKey, {
+                algorithm: "HS256",
+                expiresIn: authTtlSeconds
+            });
+        return token;
+    }
+
 
 }

@@ -26,6 +26,7 @@ export class UsersPlugin extends Plugin {
                     },
                     payload: {
                         password: Joi.string().required(),
+                        email: Joi.string().email().required(),
                         scope: Joi.array().items(Joi.string()).required()
                     }
                 },
@@ -50,6 +51,7 @@ export class UsersPlugin extends Plugin {
         let newUser = new User(
             request.params.user,
             request.payload.password,
+            request.payload.email,
             request.payload.scope);
 
         this.usersService.add(newUser, function(err) {

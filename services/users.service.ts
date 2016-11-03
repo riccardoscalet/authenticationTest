@@ -32,11 +32,13 @@ export class UsersService {
 export class User {
     username: string;
     password: string;
+    email: string;
     scope: string[];
 
-    constructor(username: string, password: string, scope: string[]) {
+    constructor(username: string, password: string, email: string, scope: string[]) {
         this.username = username;
         this.password = password;
+        this.email = email;
         this.scope = scope;
     }
 }
