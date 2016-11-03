@@ -18,11 +18,20 @@ function build(opts, cb) {
 
     const server = new Hapi.Server()
 
-    var db = levelup("./user.db");
+    // Sets encoding to json. Levelup will take care of all stringify operations.
+    var levelupOptions = {
+        keyEncoding: "json",
+        valueEncoding: "json"
+    };
+
+    // Opens/creates levelup db file. Will throw exception in case of error.
+    var db = levelup("./user.db", levelupOptions);
+
     var usersServiceObj = new UsersService(db);
     var loginPluginObj = new loginPlugin.LoginPlugin(usersServiceObj);
     var usersPluginObj = new usersPlugin.UsersPlugin(usersServiceObj);
 
+    // Sets up server conection
     server.connection({
         port: opts.port
     })
@@ -39,13 +48,14 @@ function build(opts, cb) {
     return server
 }
 
+
 function start(opts) {
     build(opts, (err, server) => {
         if (err) {
             throw err
         }
 
-        server.start(function (err) {
+        server.start(function(err) {
             if (err) {
                 throw err
             }

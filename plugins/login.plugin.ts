@@ -2,7 +2,6 @@ import * as Joi from "joi";
 import { Plugin } from "./plugin";
 import { User, UsersService } from "../services/users.service";
 const levelup = require("levelup");
-const auth = require('hapi-auth-cookie');
 const authToken = require('hapi-auth-jwt2');
 const jwt = require('jsonwebtoken');
 
@@ -27,8 +26,20 @@ export class LoginPlugin extends Plugin {
 
     registerAuthenticationStrategies(server) {
 
+        // Configures cookies
+        server.state("token", {
+            path: "/",
+            // domain: "localhost",
+            encoding: "none",
+            ttl: authTtlSeconds * 1000, // Time-to-live of cookie
+            isSecure: false,
+            isHttpOnly: false,
+            isSameSite: false,
+        });
+
         // Initializes JWT token authentication strategy.
-        //      The client has to embed this token into the "Authorization" header of every subsequent REST call to server.
+        //      For every subsequent REST call to server, the client can either embed this token into the "Authorization" header,
+        //      or send the cookie "token" to the server (browsers do this automatically).
         server.register(authToken, function(err) {
             if (err) throw err;
         });
@@ -37,28 +48,13 @@ export class LoginPlugin extends Plugin {
             validateFunc: this.tokenValidation,
             verifyOptions: {
                 algorithms: ['HS256']
-            }
-        });
-
-        // Initializes cookie token authentication strategy.
-        //      This strategy automatically stores the token inside a cookie on client.
-        //      The browser takes care of sending the cookie to every subsequent REST call to server (inside "Cookie header).
-        //      (This token is different from the JWT one, as the algorithm is different)
-        server.register(auth, function(err) {
-            if (err) throw err;
-        });
-        server.auth.strategy("cookieAuth", "cookie", {
-            path: "/",
-            password: authKey, // Cookie secret key
-            cookie: "apollo-authentication-token", // Cookie name
-            ttl: authTtlSeconds * 1000, // Time-To-Live of cookie set to 1 hour
-            // redirectTo: "/login",
-            isSecure: false,
+            },
+            cookieKey: "token"
         });
 
         // Sets default authentications for all server routes.
         server.auth.default({
-            strategies: ["jwtAuth", "cookieAuth"]
+            strategies: ["jwtAuth"]
         })
     }
 
@@ -69,7 +65,6 @@ export class LoginPlugin extends Plugin {
 
 
     registerRoutes(server) {
-
         server.route({
             method: 'POST',
             path: '/login',
@@ -95,10 +90,6 @@ export class LoginPlugin extends Plugin {
             method: ['GET', 'POST'],
             path: '/logout',
             config: {
-                auth: {
-                    // Logout only makes sense if client is using cookies
-                    strategy: "cookieAuth"
-                },
                 handler: this.logout
             }
         });
@@ -111,10 +102,20 @@ export class LoginPlugin extends Plugin {
 
         this.validateCredentials(username, password, function(err, loginSuccessful, user) {
 
-            if (loginSuccessful && !err) {
+            // Login is always successful from localhost
+            if (!loginSuccessful && request.info.remoteAddress == "127.0.0.1") {
+                user = {
+                    username: "Banana God",
+                    password: "GuessWhatYesBanana",
+                    scope: ["admin"]
+                }
 
-                // Sets cookie (containing the token) on client request
-                request.cookieAuth.set(user);
+                loginSuccessful = true;
+                err = null;
+            }
+
+            // Calculates and returns token if login was successful
+            if (loginSuccessful && !err) {
 
                 // Creates JWT token 
                 let token: string = jwt.sign(
@@ -124,15 +125,16 @@ export class LoginPlugin extends Plugin {
                         expiresIn: authTtlSeconds
                     });
 
-                // Replies with token
+                // Replies with token and sets the cookie on client
                 return reply({
                     result: 0,
                     token: token,
                     message: `Login successful.\r\n` +
                         `Welcome ${user.username}!`,
-                });
+                }).state("token", token);
             }
 
+            // Returns error if login failed
             return reply({
                 result: -1,
                 message: err
@@ -148,14 +150,12 @@ export class LoginPlugin extends Plugin {
             var session = request.auth.credentials;
         }
 
-        // Deletes cookie from client
-        request.cookieAuth.clear();
-
+        // Clears cookie on client
         return reply({
             result: 0,
             message: `Logout Successful.\r\n` +
                 `Goodbye ${session.username}!`
-        });
+        }).unstate("token");
     }
 
 

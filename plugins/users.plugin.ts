@@ -16,6 +16,10 @@ export class UsersPlugin extends Plugin {
             method: 'PUT',
             path: '/users/{user}',
             config: {
+                auth: {
+                    // Scope ensures this operation is available only to users with "admin" scope.
+                    scope: ["admin"]
+                },
                 validate: {
                     params: {
                         user: Joi.string().required().alphanum()
@@ -33,6 +37,9 @@ export class UsersPlugin extends Plugin {
             method: 'GET',
             path: '/users',
             config: {
+                auth: {
+                    scope: ["admin"]
+                },
                 handler: this.getAllUsers
             }
         })
@@ -61,14 +68,17 @@ export class UsersPlugin extends Plugin {
 
     getAllUsers(request, reply) {
         this.usersService.getAll(function(err, data) {
-            if (err) return reply({
-                result: -1,
-                message: err
-            });
+            if (err.length == 0) {
+                return reply({
+                    result: 0,
+                    data: data
+                });
+            }
 
             return reply({
-                result: 0,
-                data: data
+                result: -1,
+                data: data,
+                message: "Error occurred!"
             });
         });
     }
