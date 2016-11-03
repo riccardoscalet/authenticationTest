@@ -6,7 +6,7 @@ const authToken = require('hapi-auth-jwt2');
 const jwt = require('jsonwebtoken');
 
 const authKey = "supersecretpasswordsadaaddsdadsdsadadsaddadsadsadadadd";
-const authTtlSeconds = 60 * 60;
+const authTtlSeconds = 60 * 60; // Token remains valid for one hour
 
 
 export class LoginPlugin extends Plugin {
@@ -25,8 +25,7 @@ export class LoginPlugin extends Plugin {
 
 
     registerAuthenticationStrategies(server) {
-
-        // Configures cookies
+        // Configures cookie
         server.state("token", {
             path: "/",
             // domain: "localhost",
@@ -45,7 +44,11 @@ export class LoginPlugin extends Plugin {
         });
         server.auth.strategy('jwtAuth', 'jwt', {
             key: authKey,
-            validateFunc: this.tokenValidation,
+            validateFunc: function(decoded, request, callback) {
+                // This method is reached only if token is valid.
+
+                return callback(null, true);
+            },
             verifyOptions: {
                 algorithms: ['HS256']
             },
@@ -58,13 +61,9 @@ export class LoginPlugin extends Plugin {
         })
     }
 
-    // This method is reached only if token is valid.
-    tokenValidation(decoded, request, callback) {
-        return callback(null, true);
-    };
-
-
     registerRoutes(server) {
+
+        // Login
         server.route({
             method: 'POST',
             path: '/login',
@@ -86,6 +85,7 @@ export class LoginPlugin extends Plugin {
             }
         })
 
+        // Special login that works only when called from localhost
         server.route({
             method: 'POST',
             path: '/login/localhost',
@@ -95,6 +95,7 @@ export class LoginPlugin extends Plugin {
             }
         })
 
+        // Logout
         server.route({
             method: ['GET', 'POST'],
             path: '/logout',
@@ -206,6 +207,5 @@ export class LoginPlugin extends Plugin {
             });
         return token;
     }
-
 
 }
