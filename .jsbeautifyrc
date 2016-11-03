@@ -1,0 +1,4 @@
+{
+    "indent_handlebars": true,
+    "brace_style": "collapse-preserve-inline"
+}

@@ -1,16 +1,10 @@
 import * as Joi from "joi";
+import { Plugin } from "./plugin";
+import { User, UsersService } from "../services/users.service";
 const levelup = require("levelup");
 const auth = require('hapi-auth-cookie');
 const authToken = require('hapi-auth-jwt2');
 const jwt = require('jsonwebtoken');
-
-import {
-    Plugin
-} from "./plugin";
-import {
-    UsersService
-} from "../services/users.service";
-
 
 const authKey = "supersecretpasswordsadaaddsdadsdsadadsaddadsadsadadadd";
 const authTtlSeconds = 60 * 60;
@@ -35,7 +29,7 @@ export class LoginPlugin extends Plugin {
 
         // Initializes JWT token authentication strategy.
         //      The client has to embed this token into the "Authorization" header of every subsequent REST call to server.
-        server.register(authToken, function (err) {
+        server.register(authToken, function(err) {
             if (err) throw err;
         });
         server.auth.strategy('jwtAuth', 'jwt', {
@@ -50,7 +44,7 @@ export class LoginPlugin extends Plugin {
         //      This strategy automatically stores the token inside a cookie on client.
         //      The browser takes care of sending the cookie to every subsequent REST call to server (inside "Cookie header).
         //      (This token is different from the JWT one, as the algorithm is different)
-        server.register(auth, function (err) {
+        server.register(auth, function(err) {
             if (err) throw err;
         });
         server.auth.strategy("cookieAuth", "cookie", {
@@ -115,7 +109,7 @@ export class LoginPlugin extends Plugin {
         let username: string = request.payload.username;
         let password: string = request.payload.password;
 
-        this.loginDb(username, password, function (err, loginSuccessful, user) {
+        this.validateCredentials(username, password, function(err, loginSuccessful, user) {
 
             if (loginSuccessful && !err) {
 
@@ -123,13 +117,14 @@ export class LoginPlugin extends Plugin {
                 request.cookieAuth.set(user);
 
                 // Creates JWT token 
-                var token = jwt.sign(
+                let token: string = jwt.sign(
                     user,
                     authKey, {
                         algorithm: "HS256",
                         expiresIn: authTtlSeconds
                     });
 
+                // Replies with token
                 return reply({
                     result: 0,
                     token: token,
@@ -163,21 +158,20 @@ export class LoginPlugin extends Plugin {
         });
     }
 
-    loginDb(username, password, callback) {
-        this.usersService.get(username, function (err, value) {
+
+    validateCredentials(
+        username: string,
+        password: string,
+        callback: (err: string, isValid: boolean, user ? : User) => void): void {
+
+        this.usersService.get(username, function(err, user: User) {
             if (err) {
-                if (err.notFound) return callback("User does not exist.", false);
-                else return callback("Error occurred!", false);
+                if (err.notFound) return callback(`User ${username} does not exist.`, false);
+                return callback("Error occurred!", false);
             }
 
-            if (value == password) {
-                let user = {
-                    username: username
-                }
-                return callback(null, true, user)
-            } else {
-                return callback("Login failed. Incorrect password.", false);
-            }
+            if (user.password == password) return callback(null, true, user);
+            return callback("Login failed. Incorrect password.", false);
         });
     }
 

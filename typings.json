@@ -1,9 +1,9 @@
 {
-  "globalDependencies": {
-    "core-js": "registry:dt/core-js#0.0.0+20160914114559",
-    "hapi": "registry:dt/hapi#13.0.0+20161019130714",
-    "joi": "registry:dt/joi#9.0.0+20160906140128",
-    "levelup": "registry:dt/levelup#0.0.0+20160316155526",
-    "node": "registry:dt/node#6.0.0+20161019125345"
-  }
+    "globalDependencies": {
+        "core-js": "registry:dt/core-js#0.0.0+20160914114559",
+        "hapi": "registry:dt/hapi#13.0.0+20161019130714",
+        "joi": "registry:dt/joi#9.0.0+20160906140128",
+        "levelup": "registry:dt/levelup#0.0.0+20160316155526",
+        "node": "registry:dt/node#6.0.0+20161019125345"
+    }
 }

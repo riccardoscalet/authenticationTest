@@ -1,18 +1,9 @@
 import * as Joi from "joi";
-
-import {
-    Plugin
-} from "./plugin";
-import {
-    User
-} from "../model/user";
-import {
-    UsersService
-} from "../services/users.service";
+import { Plugin } from "./plugin";
+import { User, UsersService } from "../services/users.service";
 
 
 export class UsersPlugin extends Plugin {
-
     constructor(private usersService: UsersService, public options: any) {
         super(options, {
             name: 'usersPlugin',
@@ -54,7 +45,7 @@ export class UsersPlugin extends Plugin {
             request.payload.password,
             request.payload.scope);
 
-        this.usersService.add(newUser, function (err) {
+        this.usersService.add(newUser, function(err) {
             if (err) return reply({
                 result: -1,
                 message: err
@@ -69,7 +60,7 @@ export class UsersPlugin extends Plugin {
 
 
     getAllUsers(request, reply) {
-        this.usersService.getAll(function (err, data) {
+        this.usersService.getAll(function(err, data) {
             if (err) return reply({
                 result: -1,
                 message: err
