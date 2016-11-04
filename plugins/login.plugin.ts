@@ -9,6 +9,13 @@ const authKey = "supersecretpasswordsadaaddsdadsdsadadsaddadsadsadadadd";
 const authTtlSeconds = 60 * 60; // Token remains valid for one hour
 
 
+/**
+ * Server plugin that manages all authentication operations.
+ * 
+ * @export
+ * @class LoginPlugin
+ * @extends {Plugin}
+ */
 export class LoginPlugin extends Plugin {
     constructor(private usersService: UsersService, public options: any) {
         super(options, {
@@ -17,13 +24,27 @@ export class LoginPlugin extends Plugin {
         });
     }
 
-
+    
+    /**
+     * Method called by parent class Plugin.
+     * 
+     * @param {any} server
+     * @param {any} options
+     * 
+     * @memberOf LoginPlugin
+     */
     _register(server, options) {
         this.registerAuthenticationStrategies(server);
         this.registerRoutes(server);
     }
 
-
+    /**
+     * Registers and configures authetication strategies. 
+     * 
+     * @param {any} server
+     * 
+     * @memberOf LoginPlugin
+     */
     registerAuthenticationStrategies(server) {
         // Configures cookie
         server.state("token", {
@@ -61,6 +82,13 @@ export class LoginPlugin extends Plugin {
         })
     }
 
+    /**
+     * Registers and configures server routes.
+     * 
+     * @param {any} server
+     * 
+     * @memberOf LoginPlugin
+     */
     registerRoutes(server) {
 
         // Login
@@ -106,17 +134,24 @@ export class LoginPlugin extends Plugin {
     }
 
 
+    /**
+     * Attempts to authenticate user.
+     * If successful, returns token in body and cookie. 
+     * 
+     * @param {any} request
+     * @param {any} reply
+     * 
+     * @memberOf LoginPlugin
+     */
     login(request, reply) {
         let self = this;
 
         let username: string = request.payload.username;
         let password: string = request.payload.password;
 
-        this.validateCredentials(username, password, function(err, loginSuccessful, user) {
-
+        this.usersService.validateCredentials(username, password, function(err, loginSuccessful, user) {
             // Calculates and returns token if login was successful
             if (loginSuccessful && !err) {
-
                 // Creates JWT token
                 let token = self.createToken(user);
 
@@ -126,17 +161,40 @@ export class LoginPlugin extends Plugin {
                     token: token,
                     message: `Login successful. Welcome ${user.username}!`,
                 }).state("token", token);
+            } else {
+                // Manages error message
+                let message = `Login failed. `;
+                switch (err) {
+                    case -3:
+                        message += `User does not exist.`
+                        break;
+                    case -2:
+                        message += `Incorrect password.`
+                        break;
+                    case -1:
+                    default:
+                        message += `Unknown error!`
+                        break;
+                }
+
+                // Returns error if login failed
+                return reply({
+                    result: err,
+                    message: message
+                });
             }
-
-            // Returns error if login failed
-            return reply({
-                result: -1,
-                message: err
-            });
-
         });
     }
 
+    /**
+     * Authenticates localhost user. Does not require credentials.
+     * 
+     * @param {any} request
+     * @param {any} reply
+     * @returns
+     * 
+     * @memberOf LoginPlugin
+     */
     loginLocalhost(request, reply) {
 
         //TODO Can the client counterfeit remoteAddress? In that case, remove this method!!!
@@ -166,39 +224,45 @@ export class LoginPlugin extends Plugin {
         });
     }
 
+    /**
+     * Logs out the user by deleting the cookie on client request.
+     * 
+     * @param {any} request
+     * @param {any} reply
+     * @returns
+     * 
+     * @memberOf LoginPlugin
+     */
     logout(request, reply) {
+        let username: string;
+
         // Flag isAuthenticated is true only if this call was validated with hapi auth
         if (request.auth.isAuthenticated) {
-            // Gets session credentials from client request
-            var session = request.auth.credentials;
+            // Gets session credentials from client request. Credentials contains all useful user info.
+            username = request.auth.credentials.username;
         }
 
         // Clears cookie on client
         return reply({
             result: 0,
-            message: `Logout successful. Goodbye ${session.username}!`
+            message: `Logout successful. Goodbye ${username}!`
         }).unstate("token");
     }
 
 
-    validateCredentials(
-        username: string,
-        password: string,
-        callback: (err: string, isValid: boolean, user ? : User) => void): void {
-
-        this.usersService.get(username, function(err, user: User) {
-            if (err) {
-                if (err.notFound) return callback(`User ${username} does not exist.`, false);
-                return callback("Error occurred!", false);
-            }
-
-            if (user.password == password) return callback(null, true, user);
-            return callback("Login failed. Incorrect password.", false);
-        });
-    }
-
-    // Creates JWT token 
+    /**
+     * Creates JWT token 
+     * 
+     * @param {User} user
+     * @returns
+     * 
+     * @memberOf LoginPlugin
+     */
     createToken(user: User) {
+        // Clears password from token for security reasons.
+        user.password = null;
+
+        // Creates token.
         let token: string = jwt.sign(
             user,
             authKey, {

@@ -3,6 +3,13 @@ import { Plugin } from "./plugin";
 import { User, UsersService } from "../services/users.service";
 
 
+/**
+ * Server plugin that manages all operations on users.
+ * 
+ * @export
+ * @class UsersPlugin
+ * @extends {Plugin}
+ */
 export class UsersPlugin extends Plugin {
 
     constructor(private usersService: UsersService, public options: any) {
@@ -48,6 +55,14 @@ export class UsersPlugin extends Plugin {
     }
 
 
+    /**
+     * Adds or overwrites a user.
+     * 
+     * @param {any} request
+     * @param {any} reply
+     * 
+     * @memberOf UsersPlugin
+     */
     addUser(request, reply) {
         let newUser = new User(
             request.params.user,
@@ -68,6 +83,14 @@ export class UsersPlugin extends Plugin {
         });
     }
 
+    /**
+     * Returns a list of all users.
+     * 
+     * @param {any} request
+     * @param {any} reply
+     * 
+     * @memberOf UsersPlugin
+     */
     getAllUsers(request, reply) {
         this.usersService.getAll(function(err, data) {
             if (err.length == 0) {
