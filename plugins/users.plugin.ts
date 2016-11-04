@@ -21,11 +21,22 @@ export class UsersPlugin extends Plugin {
 
     _register(server, options) {
         server.route({
+            method: 'GET',
+            path: '/users',
+            config: {
+                auth: {
+                    // Scope ensures this operation is available only to users with "admin" scope.
+                    scope: ["admin"]
+                },
+                handler: this.getAllUsers
+            }
+        })
+
+        server.route({
             method: 'PUT',
             path: '/users/{user}',
             config: {
                 auth: {
-                    // Scope ensures this operation is available only to users with "admin" scope.
                     scope: ["admin"]
                 },
                 validate: {
@@ -43,17 +54,65 @@ export class UsersPlugin extends Plugin {
         })
 
         server.route({
-            method: 'GET',
-            path: '/users',
+            method: 'DELETE',
+            path: '/users/{user}',
             config: {
                 auth: {
                     scope: ["admin"]
                 },
-                handler: this.getAllUsers
+                validate: {
+                    params: {
+                        user: Joi.string().required().alphanum()
+                    }
+                },
+                handler: this.deleteUser,
+            }
+        })
+
+        server.route({
+            method: 'POST',
+            path: '/password',
+            config: {
+                validate: {
+                    payload: {
+                        newPassword: Joi.string().required()
+                    }
+                },
+                handler: this.changePassword,
             }
         })
     }
 
+
+    /**
+     * Returns a list of all users and their information, passwords excluded.
+     * 
+     * @param {any} request
+     * @param {any} reply
+     * 
+     * @memberOf UsersPlugin
+     */
+    getAllUsers(request, reply) {
+        this.usersService.getAll(function(err, data) {
+            if (err.length > 0) {
+                return reply({
+                    result: -1,
+                    message: this.userService.errorCodeToMessage(-1)
+                });
+            } else {
+                // Clears all passwords
+                let returnData = data.map(function(user, index) {
+                    user.password = undefined;
+                    return user;
+                });
+
+                return reply({
+                    result: 0,
+                    data: returnData
+                });
+            }
+        });
+    }
 
     /**
      * Adds or overwrites a user.
@@ -73,37 +132,84 @@ export class UsersPlugin extends Plugin {
         this.usersService.add(newUser, function(err) {
             if (err) return reply({
                 result: -1,
-                message: err
+                message: this.userService.errorCodeToMessage(-1)
             });
 
             return reply({
                 result: 0,
-                message: `User ${newUser.username} added successfully.`
+                message: `User "${newUser.username}" added successfully.`
             });
         });
     }
 
     /**
-     * Returns a list of all users.
+     * Removes a user.
      * 
      * @param {any} request
      * @param {any} reply
      * 
      * @memberOf UsersPlugin
      */
-    getAllUsers(request, reply) {
-        this.usersService.getAll(function(err, data) {
-            if (err.length == 0) {
+    deleteUser(request, reply) {
+        let username = request.params.user;
+
+        this.usersService.remove(username, function(err) {
+            if (err) {
+                let message: string = `User removal failed. ` + this.usersService.errorCodeToMessage(err);
                 return reply({
-                    result: 0,
-                    data: data
+                    result: err,
+                    message: message
                 });
             }
 
             return reply({
+                result: 0,
+                message: `User "${username}" removed successfully.`
+            });
+        });
+    }
+
+    /**
+     * Changes the user's own password.
+     * 
+     * @param {any} request
+     * @param {any} reply
+     * 
+     * @memberOf UsersPlugin
+     */
+    changePassword(request, reply) {
+        let self = this;
+
+        // Gets username from request.
+        // (The token is valid, since the call arrived to this point).
+        let username = request.auth.credentials.username;
+
+        // Sets the new password. This will be hashed by the UsersService.add function.
+        let newPassword = request.payload.newPassword;
+
+        this.usersService.get(username, function(err, user) {
+            if (err) return reply({
                 result: -1,
-                data: data,
-                message: "Error occurred!"
+                message: `Password change failed. ` + this.usersService.errorCodeToMessage(err)
+            });
+
+            // Sets the new password
+            user.password = newPassword;
+
+            // Overwrites the existing user
+            self.usersService.add(user, function(err) {
+                if (err) {
+                    let message: string = `Failed to change password. ` + this.usersService.errorCodeToMessage(err);
+                    return reply({
+                        result: err,
+                        message: message
+                    });
+                }
+
+                return reply({
+                    result: 0,
+                    message: `Password successfully changed.`
+                });
             });
         });
     }

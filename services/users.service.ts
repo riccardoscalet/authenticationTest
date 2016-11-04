@@ -19,9 +19,13 @@ export class UsersService {
      * 
      * @memberOf UsersService
      */
-    get(username: string, callback: (err: any, value: any) => void): void {
-        this.db.get(username, function(err, value) {
-            callback(err, value);
+    get(username: string, callback: (err: any, user ? : User) => void): void {
+        this.db.get(username, function(err, user) {
+            if (err) {
+                console.log(`ERROR - UsersService.get - ${err}`);
+                if (err.notFound) return callback(-2); // User does not exist.
+                else return callback(-1); // Unexpected error!
+            } else return callback(null, user);
         });
     }
 
@@ -39,8 +43,32 @@ export class UsersService {
 
         // Writes user on db
         this.db.put(user.username, user, function(err) {
+            if (err) console.log(`ERROR - UsersService.add - ${err}`);
             callback(err);
         });
+    }
+
+    /**
+     * Deletes a user from database.
+     * 
+     * @param {string} username
+     * @param {(err: any) => void} callback
+     * 
+     * @memberOf UsersService
+     */
+    remove(username: string, callback: (err: any) => void): void {
+        let self = this;
+
+        // Verifies if user exists
+        this.get(username, function(err, user: User) {
+            if (err) return callback(-2);
+
+            // Removes user on db
+            self.db.del(username, function(err) {
+                if (err) console.log(`ERROR - UsersService.remove - ${err}`);
+                return callback(err);
+            });
+        })
     }
 
     /**
@@ -50,10 +78,10 @@ export class UsersService {
      * 
      * @memberOf UsersService
      */
-    getAll(callback: (err: any[], data ? : string[]) => void): void {
+    getAll(callback: (err: any[], data ? : User[]) => void): void {
         let errors = [];
         let returnData = [];
-        this.db.createKeyStream()
+        this.db.createValueStream()
             .on('error', function(err) {
                 console.log(`ERROR - UsersService.getAll - ${err}`);
                 errors.push(err);
@@ -79,16 +107,35 @@ export class UsersService {
         callback: (err: number, isValid: boolean, user ? : User) => void): void {
 
         this.get(username, function(err, user: User) {
-            if (err) {
-                if (err.notFound) return callback(-2, false);
-                else return callback(-1, false);
-            }
+            if (err) return callback(err, false);
 
+            // Hashes the clear password received, to compare it with the hashed one retrieved from database
             let hashedPassword = hash.sha1(password);
 
             if (user.password == hashedPassword) return callback(null, true, user);
-            else return callback(-3, false);
+            else return callback(-3, false); // Incorrect password.
         });
+    }
+
+    /**
+     * Convert error codes returned by UsersService to string messages.
+     * //TODO Error codes should be enums, and this method should not exist.
+     * 
+     * @param {number} errorCode
+     * @returns {string}
+     * 
+     * @memberOf UsersService
+     */
+    errorCodeToMessage(errorCode: number): string {
+        switch (errorCode) {
+            case -3:
+                return `Incorrect password.`
+            case -2:
+                return `User does not exist.`
+            case -1:
+            default:
+                return `Unexpected error!`
+        }
     }
 }
 

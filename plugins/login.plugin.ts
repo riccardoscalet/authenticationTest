@@ -24,7 +24,7 @@ export class LoginPlugin extends Plugin {
         });
     }
 
-    
+
     /**
      * Method called by parent class Plugin.
      * 
@@ -162,22 +162,8 @@ export class LoginPlugin extends Plugin {
                     message: `Login successful. Welcome ${user.username}!`,
                 }).state("token", token);
             } else {
-                // Manages error message
-                let message = `Login failed. `;
-                switch (err) {
-                    case -3:
-                        message += `User does not exist.`
-                        break;
-                    case -2:
-                        message += `Incorrect password.`
-                        break;
-                    case -1:
-                    default:
-                        message += `Unknown error!`
-                        break;
-                }
-
                 // Returns error if login failed
+                let message = `Login failed. ` + self.usersService.errorCodeToMessage(err);
                 return reply({
                     result: err,
                     message: message
@@ -249,7 +235,6 @@ export class LoginPlugin extends Plugin {
         }).unstate("token");
     }
 
-
     /**
      * Creates JWT token 
      * 
@@ -259,7 +244,7 @@ export class LoginPlugin extends Plugin {
      * @memberOf LoginPlugin
      */
     createToken(user: User) {
-        // Clears password from token for security reasons.
+        // Clears password before creating token, for security reasons.
         user.password = null;
 
         // Creates token.
