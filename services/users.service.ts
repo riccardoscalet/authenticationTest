@@ -1,4 +1,5 @@
 import * as hash from "object-hash";
+import * as clone from "clone";
 
 /**
  * Service that manages all operations regarding users, including interactions with database.
@@ -25,7 +26,7 @@ export class UsersService {
                 console.log(`ERROR - UsersService.get - ${err}`);
                 if (err.notFound) return callback(-2); // User does not exist.
                 else return callback(-1); // Unexpected error!
-            } else return callback(null, user);
+            } else return callback(undefined, user);
         });
     }
 
@@ -38,11 +39,13 @@ export class UsersService {
      * @memberOf UsersService
      */
     add(user: User, callback: (err: any) => void): void {
-        // Hashes password 
-        user.password = hash.sha1(user.password);
+        // Hashes password. (Note: hashed password is set in "user" parameter, since it's an object)
+
+        let userCopy: User = clone(user);
+        userCopy.password = hash.sha1(userCopy.password);
 
         // Writes user on db
-        this.db.put(user.username, user, function(err) {
+        this.db.put(userCopy.username, userCopy, function(err) {
             if (err) console.log(`ERROR - UsersService.add - ${err}`);
             callback(err);
         });
@@ -89,7 +92,7 @@ export class UsersService {
             }).on('data', function(data) {
                 returnData.push(data);
             }).on('end', function() {
-                if(errors.length == 0) errors = null;
+                if (errors.length == 0) errors = undefined;
                 callback(errors, returnData);
             });
     }
@@ -114,7 +117,7 @@ export class UsersService {
             // Hashes the clear password received, to compare it with the hashed one retrieved from database
             let hashedPassword = hash.sha1(password);
 
-            if (user.password == hashedPassword) return callback(null, true, user);
+            if (user.password == hashedPassword) return callback(undefined, true, user);
             else return callback(-3, false); // Incorrect password.
         });
     }
