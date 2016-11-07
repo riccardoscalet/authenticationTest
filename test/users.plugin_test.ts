@@ -8,24 +8,21 @@ let server = new Hapi.Server();
 let userService = {};
 let usersPlugin: UsersPlugin = new UsersPlugin(userService as UsersService);
 
-server.connection({
-    port: 8989
-});
-server.register(
-    [
-        usersPlugin
-    ]);
+server.connection({ port: 8989 });
+// server.register([usersPlugin], function(err) {
+//     server.start();
+// });
 
-test("UsersPlugin.add - ", function(t) {
-    //Arrange
-    const options = {
-        method: "GET",
-        url: "/users"
-    }
+// test("UsersPlugin.add - ", function(t) {
+//     //Arrange
+//     let options: Hapi.IServerInjectOptions = {
+//         method: "GET",
+//         url: "/users",
+//     }
 
-    //Act
-    server.inject(options, function(response) {
-        console.log(response);
-        t.end();
-    })
-});
+//     //Act
+//     server.inject(options, function(response) {
+//         console.log(response);
+//         t.end();
+//     })
+// });

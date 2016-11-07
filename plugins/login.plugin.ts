@@ -1,13 +1,10 @@
 import * as Joi from "joi";
-import { Plugin } from "./plugin";
-import { User, UsersService } from "../services/users.service";
 const levelup = require("levelup");
-const authToken = require('hapi-auth-jwt2');
 const jwt = require('jsonwebtoken');
 
-const authKey = "supersecretpasswordsadaaddsdadsdsadadsaddadsadsadadadd";
-const authTtlSeconds = 60 * 60; // Token remains valid for one hour
-
+import { ServerMain, AuthenticationOptions } from "../server.main";
+import { Plugin } from "./plugin";
+import { User, UsersService } from "../services/users.service";
 
 /**
  * Server plugin that manages all authentication operations.
@@ -24,9 +21,9 @@ export class LoginPlugin extends Plugin {
         });
     }
 
-
     /**
-     * Method called by parent class Plugin.
+     * Registers and configures server routes.
+     * Method called by parent class Plugin. 
      * 
      * @param {any} server
      * @param {any} options
@@ -34,63 +31,6 @@ export class LoginPlugin extends Plugin {
      * @memberOf LoginPlugin
      */
     _register(server, options) {
-        this.registerAuthenticationStrategies(server);
-        this.registerRoutes(server);
-    }
-
-    /**
-     * Registers and configures authetication strategies. 
-     * 
-     * @param {any} server
-     * 
-     * @memberOf LoginPlugin
-     */
-    registerAuthenticationStrategies(server) {
-        // Configures cookie
-        server.state("token", {
-            path: "/",
-            // domain: "localhost",
-            encoding: "none",
-            ttl: authTtlSeconds * 1000, // Time-to-live of cookie
-            isSecure: false,
-            isHttpOnly: false,
-            isSameSite: false,
-        });
-
-        // Initializes JWT token authentication strategy.
-        //      For every subsequent REST call to server, the client can either embed this token into the "Authorization" header,
-        //      or send the cookie "token" to the server (browsers do this automatically).
-        server.register(authToken, function(err) {
-            if (err) throw err;
-        });
-        server.auth.strategy('jwtAuth', 'jwt', {
-            key: authKey,
-            validateFunc: function(decoded, request, callback) {
-                // This method is reached only if token is valid.
-
-                return callback(null, true);
-            },
-            verifyOptions: {
-                algorithms: ['HS256']
-            },
-            cookieKey: "token"
-        });
-
-        // Sets default authentications for all server routes.
-        server.auth.default({
-            strategies: ["jwtAuth"]
-        })
-    }
-
-    /**
-     * Registers and configures server routes.
-     * 
-     * @param {any} server
-     * 
-     * @memberOf LoginPlugin
-     */
-    registerRoutes(server) {
-
         // Login
         server.route({
             method: 'POST',
@@ -249,9 +189,9 @@ export class LoginPlugin extends Plugin {
         // Creates token.
         let token: string = jwt.sign(
             user,
-            authKey, {
+            AuthenticationOptions.authKey, {
                 algorithm: "HS256",
-                expiresIn: authTtlSeconds
+                expiresIn: AuthenticationOptions.authTtlSeconds
             });
         return token;
     }
