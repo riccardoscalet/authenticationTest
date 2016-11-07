@@ -220,13 +220,12 @@ export class LoginPlugin extends Plugin {
      * @memberOf LoginPlugin
      */
     logout(request, reply) {
-        let username: string;
 
-        // Flag isAuthenticated is true only if this call was validated with hapi auth
-        if (request.auth.isAuthenticated) {
-            // Gets session credentials from client request. Credentials contains all useful user info.
-            username = request.auth.credentials.username;
-        }
+        // // Flag isAuthenticated is true only if this call was validated with hapi auth
+        // if (request.auth.isAuthenticated) {
+
+        // Gets session credentials from client request. Credentials contains all useful user info.
+        let username = request.auth.credentials.username;
 
         // Clears cookie on client
         return reply({

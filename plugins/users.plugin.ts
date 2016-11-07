@@ -94,7 +94,7 @@ export class UsersPlugin extends Plugin {
      */
     getAllUsers(request, reply) {
         this.usersService.getAll(function(err, data) {
-            if (err.length > 0) {
+            if (err) {
                 return reply({
                     result: -1,
                     message: this.userService.errorCodeToMessage(-1)

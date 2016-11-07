@@ -35,4 +35,5 @@ user.db
 model/*.js
 plugins/*.js
 services/*.js
+test/*.js
 

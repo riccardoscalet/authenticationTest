@@ -73,6 +73,7 @@ export class UsersService {
 
     /**
      * Gets all usernames from database.
+     * Users are automatically sorted by key.
      * 
      * @param {(err: any[], data ? : string[]) => void} callback
      * 
@@ -88,6 +89,7 @@ export class UsersService {
             }).on('data', function(data) {
                 returnData.push(data);
             }).on('end', function() {
+                if(errors.length == 0) errors = null;
                 callback(errors, returnData);
             });
     }
