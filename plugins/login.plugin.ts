@@ -17,7 +17,7 @@ const authTtlSeconds = 60 * 60; // Token remains valid for one hour
  * @extends {Plugin}
  */
 export class LoginPlugin extends Plugin {
-    constructor(private usersService: UsersService, public options: any) {
+    constructor(private usersService: UsersService, public options ? : any) {
         super(options, {
             name: 'loginPlugin',
             version: '1.0.0'

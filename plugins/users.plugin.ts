@@ -12,7 +12,7 @@ import { User, UsersService } from "../services/users.service";
  */
 export class UsersPlugin extends Plugin {
 
-    constructor(private usersService: UsersService, public options: any) {
+    constructor(private usersService: UsersService, public options ? : any) {
         super(options, {
             name: 'usersPlugin',
             version: '1.0.0'
