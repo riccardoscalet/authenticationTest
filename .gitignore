@@ -32,8 +32,6 @@ db
 typings
 user.db
 *.js.map
-model/*.js
-plugins/*.js
-services/*.js
-test/*.js
+*.js
+
 
