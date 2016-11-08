@@ -1,6 +1,15 @@
 import * as Hapi from "hapi";
 const authBasic = require("hapi-auth-basic");
 
+/**
+ * Creates server, set basic authentication that is always true, registers all plugins, and then starts the server.
+ * 
+ * @export
+ * @param {number} port
+ * @param {any[]} plugins
+ * @param {(err: any, server: Hapi.Server) => void} callback
+ * @returns
+ */
 export function createTestServer(
     port: number,
     plugins: any[],

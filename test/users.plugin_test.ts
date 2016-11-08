@@ -41,9 +41,10 @@ test("UsersPlugin/users - With admin user scope - Should return all users withou
         ((err, server) => {
             server.inject(options, function(response: any) {
                 //Assert
-                t.true(stubGetAll.called);
+                t.true(stubGetAll.called, "Called UserService.getAll");
                 t.equal(response.statusCode, 200, "Response: OK");
-                t.equal(response.result.result, 0, "Operation was completed successfully");
+                //response.result contains everything returned with reply
+                t.equal(response.result.result, 0, "Operation completed successfully");
                 t.equal(response.result.data.length, 3, "Returned all users");
                 response.result.data.forEach((element, index) => {
                     t.equal(element.password, undefined, `Element ${index}'s password was cleared`);
@@ -52,7 +53,6 @@ test("UsersPlugin/users - With admin user scope - Should return all users withou
             });
         }));
 });
-
 
 test("UsersPlugin/users - With insufficient user scope - Should forbid call", function(t) {
     //Arrange
@@ -71,14 +71,14 @@ test("UsersPlugin/users - With insufficient user scope - Should forbid call", fu
         ((err, server) => {
             server.inject(options, function(response: any) {
                 //Assert
-                t.false(spyGetAll.called);
+                t.false(spyGetAll.called, "Not called UserService.getAll");
                 t.equal(response.statusCode, 403, "Response: Forbidden");
                 server.stop(t.end);
             });
         }));
 });
 
-test("UsersPlugin/users/abc - Should add user", function(t) {
+test("UsersPlugin/users/abc PUT - Should add user", function(t) {
     //Arrange
     let usersService = mockUsersService();
     let stubAdd = sinon.stub(usersService, "add",
@@ -103,8 +103,81 @@ test("UsersPlugin/users/abc - Should add user", function(t) {
         ((err, server) => {
             server.inject(options, function(response: any) {
                 //Assert
-                t.true(stubAdd.called);
+                t.true(stubAdd.called, "Called UserService.add");
                 t.equal(response.statusCode, 200, "Response: OK");
+                t.equal(response.result.result, 0, "Operation completed successfully");
+                server.stop(t.end);
+            });
+        }))
+});
+
+test("UsersPlugin/users/abc DELETE - Should remove user", function(t) {
+    //Arrange
+    let usersService = mockUsersService();
+    let stubRemove = sinon.stub(usersService, "remove",
+        function(user, callback) {
+            return callback(undefined);
+        });
+    let usersPlugin: UsersPlugin = new UsersPlugin(usersService);
+
+    let options: Hapi.IServerInjectOptions = {
+        method: "DELETE",
+        url: "/users/abc",
+        credentials: { scope: ["admin"] }
+    }
+
+    //Act
+    TestUtils.createTestServer(8989, [usersPlugin],
+        ((err, server) => {
+            server.inject(options, function(response: any) {
+                //Assert
+                t.true(stubRemove.called, "Called UserService.remove");
+                t.equal(response.statusCode, 200, "Response: OK");
+                t.equal(response.result.result, 0, "Operation completed successfully");
+                server.stop(t.end);
+            });
+        }))
+});
+
+test("UsersPlugin/password - Should set a new password for calling user", function(t) {
+    //Arrange
+    let user = {
+        username: "User1",
+        password: "Ananas",
+        scope: ["normal"]
+    };
+    let newPassword = "Bananaapple!";
+
+    let usersService = mockUsersService();
+    let stubGet = sinon.stub(usersService, "get")
+    stubGet.callsArgWith(1, undefined, user);
+    let stubAdd = sinon.stub(usersService, "add");
+    stubAdd.callsArgWith(1, undefined);
+    let usersPlugin: UsersPlugin = new UsersPlugin(usersService);
+
+    let options: Hapi.IServerInjectOptions = {
+        method: "POST",
+        url: "/password",
+        payload: {
+            newPassword: newPassword
+        },
+        credentials: {
+            username: "User1",
+            scope: ["normal"]
+        }
+    }
+
+    //Act
+    TestUtils.createTestServer(8989, [usersPlugin],
+        ((err, server) => {
+            server.inject(options, function(response: any) {
+                //Assert
+                t.true(stubGet.called, "Called UserService.get");
+                t.equal(stubGet.firstCall.args[0], user.username, "Called UserService.get with correct username");
+                t.true(stubAdd.called, "Called UserService.add");
+                t.equal(stubAdd.firstCall.args[0].password, newPassword, "Called UserService.add with correct new password");
+                t.equal(response.statusCode, 200, "Response: OK");
+                t.equal(response.result.result, 0, "Operation completed successfully");
                 server.stop(t.end);
             });
         }))
