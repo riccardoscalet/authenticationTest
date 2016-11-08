@@ -34,7 +34,7 @@ export function ServerMain(options: any, callback: (err: any, server ? : Hapi.Se
     server.connection({ port: options.port });
 
     // Configures authentication
-    registerAuthenticationStrategies(server);
+    configureAuthentication(server);
 
     // Registers plugins to expose on server
     server.register(
@@ -42,24 +42,22 @@ export function ServerMain(options: any, callback: (err: any, server ? : Hapi.Se
             loginPlugin,
             usersPlugin
         ], (err) => {
-            if (err) callback(err);
+            if (err) return callback(err);
+
+            server.start(function(err) {
+                callback(err, server);
+            })
         });
-
-
-    server.start(function(err) {
-        callback(err, server);
-    })
 
     return server;
 }
 
 /**
- * Registers and configures authetication strategies. 
+ * Registers and configures authentication strategies. 
  * 
  * @param {any} server
  */
-function registerAuthenticationStrategies(server) {
-
+function configureAuthentication(server) {
     // Configures cookie
     server.state("token", {
         path: "/",
@@ -77,17 +75,19 @@ function registerAuthenticationStrategies(server) {
     server.register(authToken, function(err) {
         if (err) throw err;
     });
-    server.auth.strategy('jwtAuth', 'jwt', {
+
+    server.auth.strategy("jwtAuth", "jwt", {
         key: AuthenticationOptions.authKey,
         validateFunc: function(decoded, request, callback) {
-            // This method is reached only if token is valid.
-
+            // This method is reached only if token is valid. Client request with bad authentication are refused before this.
+            // validateFunc is an additional layer to check authentication, before finally handling client request. 
             return callback(null, true);
         },
         verifyOptions: {
-            algorithms: ['HS256']
+            algorithms: ["HS256"]
         },
-        cookieKey: "token"
+        cookieKey: "token",
+        mode: true
     });
 
     // Sets default authentications for all server routes.

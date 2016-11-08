@@ -19,6 +19,7 @@ function start(options) {
         })
 }
 
+
 if (require.main === module) {
     let args = minimist(
         process.argv.slice(2), {
