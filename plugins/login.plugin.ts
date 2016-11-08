@@ -124,29 +124,27 @@ export class LoginPlugin extends Plugin {
 
         //TODO Can the client counterfeit remoteAddress? In that case, remove this method!!!
 
-        // Login is always successful from localhost
-        if (request.info.remoteAddress == "127.0.0.1") {
-            let user: User = {
-                username: "Banana God Administrator",
-                password: "GuessWhatYesBanana",
-                email: "banana@banana.org",
-                scope: ["admin", "bananaman"]
-            }
-
-            let token = this.createToken(user);
-
-            // Replies with token and sets the cookie on client
-            return reply({
-                result: 0,
-                token: token,
-                message: `Login successful. Welcome ${user.username}!`,
-            }).state("token", token);
+        // Returns error if request doesn't come from localhost
+        if (request.info.remoteAddress != "127.0.0.1") {
+            return reply({ result: -1 });
         }
 
-        // Returns error if login failed
+        // Login is always successful from localhost
+        let user: User = {
+            username: "Banana God Administrator",
+            password: "GuessWhatYesBanana",
+            email: "banana@banana.org",
+            scope: ["admin", "bananaman"]
+        }
+
+        let token = this.createToken(user);
+
+        // Replies with token and sets the cookie on client
         return reply({
-            result: -1
-        });
+            result: 0,
+            token: token,
+            message: `Login successful. Welcome ${user.username}!`,
+        }).state("token", token);
     }
 
     /**
@@ -159,7 +157,6 @@ export class LoginPlugin extends Plugin {
      * @memberOf LoginPlugin
      */
     logout(request, reply) {
-
         // // Flag isAuthenticated is true only if this call was validated with hapi auth
         // if (request.auth.isAuthenticated) {
 

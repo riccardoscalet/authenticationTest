@@ -92,3 +92,28 @@ test("LoginPlugin/login - With bad credentials - Should return error", function(
             });
         }));
 });
+
+test("LoginPlugin/login - With valid credentials - Should return token", function(t) {
+    //Arrange
+    let usersService = mockUsersService();
+    let loginPlugin: LoginPlugin = new LoginPlugin(usersService);
+
+    let options: Hapi.IServerInjectOptions = {
+        method: "POST",
+        url: "/logout",
+        credentials: {
+            username: "FuckingyPrettyPinkyPrincess"
+        }
+    }
+
+    //Act
+    TestUtils.createTestServer(8989, [loginPlugin],
+        ((err, server) => {
+            server.inject(options, function(response: any) {
+                //Assert
+                t.equal(response.statusCode, 200, "Response: OK");
+                t.equal(response.result.result, 0, "Operation completed successfully");
+                server.stop(t.end);
+            });
+        }));
+});
