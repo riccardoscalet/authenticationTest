@@ -21,13 +21,14 @@ function mockUsersService(): any {
 test("UsersPlugin/users - With admin user scope - Should return all users without passwords", function(t) {
     //Arrange
     let usersService = mockUsersService();
-    let stubGetAll = sinon.stub(usersService, "getAll", function(callback) {
-        callback(undefined, [
+    let stubGetAll = sinon.stub(usersService, "getAll")
+    stubGetAll.callsArgWith(0, //Calls the callback that is parameter 0, with the following args
+        undefined, [
             { username: "User1", password: "Banana" },
             { username: "User2", password: "Cipolla" },
             { username: "User3", password: "Corn Flakes" }
         ]);
-    });
+
     let usersPlugin: UsersPlugin = new UsersPlugin(usersService);
 
     let options: Hapi.IServerInjectOptions = {
@@ -81,10 +82,8 @@ test("UsersPlugin/users - With insufficient user scope - Should forbid call", fu
 test("UsersPlugin/users/abc PUT - Should add user", function(t) {
     //Arrange
     let usersService = mockUsersService();
-    let stubAdd = sinon.stub(usersService, "add",
-        function(user, callback) {
-            return callback(undefined);
-        });
+    let stubAdd = sinon.stub(usersService, "add");
+    stubAdd.callsArgWith(1, undefined);
     let usersPlugin: UsersPlugin = new UsersPlugin(usersService);
 
     let options: Hapi.IServerInjectOptions = {
@@ -114,10 +113,8 @@ test("UsersPlugin/users/abc PUT - Should add user", function(t) {
 test("UsersPlugin/users/abc DELETE - Should remove user", function(t) {
     //Arrange
     let usersService = mockUsersService();
-    let stubRemove = sinon.stub(usersService, "remove",
-        function(user, callback) {
-            return callback(undefined);
-        });
+    let stubRemove = sinon.stub(usersService, "remove");
+    stubRemove.callsArgWith(1, undefined);
     let usersPlugin: UsersPlugin = new UsersPlugin(usersService);
 
     let options: Hapi.IServerInjectOptions = {

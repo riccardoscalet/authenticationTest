@@ -44,8 +44,7 @@ export class LoginPlugin extends Plugin {
                 validate: {
                     payload: {
                         username: Joi.string().required().alphanum(),
-                        password: Joi.string().required(),
-                        cookie: Joi.bool().default(true)
+                        password: Joi.string().required()
                     }
                 },
 
@@ -90,8 +89,15 @@ export class LoginPlugin extends Plugin {
         let password: string = request.payload.password;
 
         this.usersService.validateCredentials(username, password, function(err, loginSuccessful, user) {
-            // Calculates and returns token if login was successful
-            if (loginSuccessful && !err) {
+            if (err || !loginSuccessful) {
+                // Returns error if login failed
+                let message = `Login failed. ` + self.usersService.errorCodeToMessage(err);
+                return reply({
+                    result: err,
+                    message: message
+                })
+            } else {
+                // Calculates and returns token if login was successful
                 // Creates JWT token
                 let token = self.createToken(user);
 
@@ -101,13 +107,6 @@ export class LoginPlugin extends Plugin {
                     token: token,
                     message: `Login successful. Welcome ${user.username}!`,
                 }).state("token", token);
-            } else {
-                // Returns error if login failed
-                let message = `Login failed. ` + self.usersService.errorCodeToMessage(err);
-                return reply({
-                    result: err,
-                    message: message
-                });
             }
         });
     }
