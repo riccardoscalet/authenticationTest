@@ -49,7 +49,7 @@ export class UsersPlugin extends Plugin {
                         scope: Joi.array().items(Joi.string()).required()
                     }
                 },
-                handler: this.addUser,
+                handler: this.setUser,
             }
         })
 
@@ -122,7 +122,7 @@ export class UsersPlugin extends Plugin {
      * 
      * @memberOf UsersPlugin
      */
-    addUser(request, reply) {
+    setUser(request, reply) {
         let newUser = new User(
             request.params.user,
             request.payload.password,
