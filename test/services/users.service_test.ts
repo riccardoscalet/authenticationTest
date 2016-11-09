@@ -1,7 +1,7 @@
 const test = require("tape");
 const memdb = require("memdb");
 import * as hash from "object-hash";
-import { User, UsersService } from "../services/users.service";
+import { User, UsersService } from "../../services/users.service";
 
 let memdbOptions = {
     keyEncoding: "json",

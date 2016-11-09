@@ -2,10 +2,10 @@ const test = require("tape");
 import * as sinon from "sinon";
 
 import * as Hapi from "hapi";
-import * as TestUtils from "./test.utils";
+import * as TestUtils from "../test.utils";
 
-import { UsersPlugin } from "../plugins/users.plugin";
-import { UsersService } from "../services/users.service";
+import { UsersPlugin } from "../../plugins/users.plugin";
+import { UsersService } from "../../services/users.service";
 
 
 function mockUsersService(): any {
