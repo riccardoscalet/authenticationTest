@@ -31,7 +31,16 @@ export function ServerMain(options: any, callback: (err: any, server ? : Hapi.Se
     let usersPlugin: UsersPlugin = new UsersPlugin(usersService);
 
     // Sets up server conection
-    server.connection({ port: options.port });
+    server.connection({
+        port: options.port,
+        routes: {
+            cors: {
+                // This allows to receive CORS calls with credentials. It's required to use cookies with Angular2.
+                origin: ["*"],
+                credentials: true
+            }
+        }
+    });
 
     // Configures authentication
     configureAuthentication(server);
