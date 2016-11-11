@@ -62,6 +62,15 @@ export class LoginPlugin extends Plugin {
             }
         })
 
+        // Simply checks is user token is still valid. The handler does basically nothing.
+        server.route({
+            method: 'POST',
+            path: '/auth',
+            config: {
+                handler: this.auth
+            }
+        });
+
         // Logout
         server.route({
             method: ['GET', 'POST'],
@@ -70,6 +79,8 @@ export class LoginPlugin extends Plugin {
                 handler: this.logout
             }
         });
+
+
     }
 
 
@@ -121,7 +132,6 @@ export class LoginPlugin extends Plugin {
      * @memberOf LoginPlugin
      */
     loginLocalhost(request, reply) {
-
         //TODO Can the client counterfeit remoteAddress? In that case, remove this method!!!
 
         // Returns error if request doesn't come from localhost
@@ -145,6 +155,18 @@ export class LoginPlugin extends Plugin {
             token: token,
             message: `Login successful. Welcome ${user.username}!`,
         }).state("token", token);
+    }
+
+    /**
+     * 
+     * Simply checks is user token is still valid. This handler does basically nothing.
+     * @param {any} request
+     * @param {any} reply
+     * 
+     * @memberOf LoginPlugin
+     */
+    auth(request, reply) {
+        reply(0);
     }
 
     /**
