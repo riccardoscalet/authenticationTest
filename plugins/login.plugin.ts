@@ -86,7 +86,7 @@ export class LoginPlugin extends Plugin {
 
     /**
      * Attempts to authenticate user.
-     * If successful, returns token in body and cookie. 
+     * If successful, returns token in body and cookie. Also returns user credentials.
      * 
      * @param {any} request
      * @param {any} reply
@@ -107,14 +107,17 @@ export class LoginPlugin extends Plugin {
                     result: err,
                     message: message
                 })
+
             } else {
                 // Calculates and returns token if login was successful
+
                 // Creates JWT token
                 let token = self.createToken(user);
 
                 // Replies with token and sets the cookie on client
                 return reply({
                     result: 0,
+                    data: user,
                     token: token,
                     message: `Login successful. Welcome ${user.username}!`,
                 }).state("token", token);
@@ -159,14 +162,17 @@ export class LoginPlugin extends Plugin {
 
     /**
      * 
-     * Simply checks is user token is still valid. This handler does basically nothing.
+     * Simply checks is user token is still valid and returns user credentials if it is.
      * @param {any} request
      * @param {any} reply
      * 
      * @memberOf LoginPlugin
      */
     auth(request, reply) {
-        reply(0);
+        reply({
+            result: 0,
+            data: request.auth.credentials
+        });
     }
 
     /**
@@ -179,9 +185,6 @@ export class LoginPlugin extends Plugin {
      * @memberOf LoginPlugin
      */
     logout(request, reply) {
-        // // Flag isAuthenticated is true only if this call was validated with hapi auth
-        // if (request.auth.isAuthenticated) {
-
         // Gets session credentials from client request. Credentials contains all useful user info.
         let username = request.auth.credentials.username;
 
