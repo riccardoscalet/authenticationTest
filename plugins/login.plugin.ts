@@ -14,7 +14,7 @@ import { User, UsersService } from "../services/users.service";
  * @extends {Plugin}
  */
 export class LoginPlugin extends Plugin {
-    constructor(private usersService: UsersService, public options ? : any) {
+    constructor(private usersService: UsersService, public options?: any) {
         super(options, {
             name: 'loginPlugin',
             version: '1.0.0'
@@ -34,7 +34,7 @@ export class LoginPlugin extends Plugin {
         // Login
         server.route({
             method: 'POST',
-            path: '/login',
+            path: '/api/login',
             config: {
 
                 // Disables authentication for this route: login is used to obtain the token!
@@ -55,7 +55,7 @@ export class LoginPlugin extends Plugin {
         // Special login that works only when called from localhost
         server.route({
             method: 'POST',
-            path: '/login/localhost',
+            path: '/api/login/localhost',
             config: {
                 auth: false,
                 handler: this.loginLocalhost
@@ -65,7 +65,7 @@ export class LoginPlugin extends Plugin {
         // Simply checks is user token is still valid. The handler does basically nothing.
         server.route({
             method: 'POST',
-            path: '/auth',
+            path: '/api/auth',
             config: {
                 handler: this.auth
             }
@@ -74,7 +74,7 @@ export class LoginPlugin extends Plugin {
         // Logout
         server.route({
             method: ['GET', 'POST'],
-            path: '/logout',
+            path: '/api/logout',
             config: {
                 handler: this.logout
             }
@@ -99,7 +99,7 @@ export class LoginPlugin extends Plugin {
         let username: string = request.payload.username;
         let password: string = request.payload.password;
 
-        this.usersService.validateCredentials(username, password, function(err, loginSuccessful, user) {
+        this.usersService.validateCredentials(username, password, function (err, loginSuccessful, user) {
             if (err || !loginSuccessful) {
                 // Returns error if login failed
                 let message = `Login failed. ` + self.usersService.errorCodeToMessage(err);
@@ -107,17 +107,18 @@ export class LoginPlugin extends Plugin {
                     result: err,
                     message: message
                 })
-
-            } else {
+            }
+            else {
                 // Calculates and returns token if login was successful
 
                 // Creates JWT token
                 let token = self.createToken(user);
+                let tokenClear = jwt.decode(token);
 
                 // Replies with token and sets the cookie on client
                 return reply({
                     result: 0,
-                    data: user,
+                    data: tokenClear,
                     token: token,
                     message: `Login successful. Welcome ${user.username}!`,
                 }).state("token", token);

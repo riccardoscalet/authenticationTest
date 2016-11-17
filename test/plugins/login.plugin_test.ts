@@ -19,7 +19,7 @@ function mockUsersService(): any {
     }
 }
 
-test("LoginPlugin/login - With valid credentials - Should return token", function(t) {
+test("LoginPlugin/login - With valid credentials - Should return token", function (t) {
     //Arrange
     let user = {
         username: "PinkyPrettyPrincess",
@@ -35,7 +35,7 @@ test("LoginPlugin/login - With valid credentials - Should return token", functio
 
     let options: Hapi.IServerInjectOptions = {
         method: "POST",
-        url: "/login",
+        url: "/api/login",
         payload: {
             username: user.username,
             password: user.password
@@ -45,7 +45,7 @@ test("LoginPlugin/login - With valid credentials - Should return token", functio
     //Act
     TestUtils.createTestServer(8989, [loginPlugin],
         ((err, server) => {
-            server.inject(options, function(response: any) {
+            server.inject(options, function (response: any) {
                 //Assert
                 t.true(stubValidate.called);
                 t.equal(response.statusCode, 200, "Response: OK");
@@ -56,7 +56,7 @@ test("LoginPlugin/login - With valid credentials - Should return token", functio
         }));
 });
 
-test("LoginPlugin/login - With bad credentials - Should return error", function(t) {
+test("LoginPlugin/login - With bad credentials - Should return error", function (t) {
     //Arrange
     let user = {
         username: "SadSadPanda",
@@ -71,7 +71,7 @@ test("LoginPlugin/login - With bad credentials - Should return error", function(
 
     let options: Hapi.IServerInjectOptions = {
         method: "POST",
-        url: "/login",
+        url: "/api/login",
         payload: {
             username: user.username,
             password: user.password
@@ -81,7 +81,7 @@ test("LoginPlugin/login - With bad credentials - Should return error", function(
     //Act
     TestUtils.createTestServer(8989, [loginPlugin],
         ((err, server) => {
-            server.inject(options, function(response: any) {
+            server.inject(options, function (response: any) {
                 //Assert
                 t.true(stubValidate.called);
                 t.true(errorCodeToMessage.called);
@@ -93,14 +93,14 @@ test("LoginPlugin/login - With bad credentials - Should return error", function(
         }));
 });
 
-test("LoginPlugin/login - With valid credentials - Should return token", function(t) {
+test("LoginPlugin/login - With valid credentials - Should return token", function (t) {
     //Arrange
     let usersService = mockUsersService();
     let loginPlugin: LoginPlugin = new LoginPlugin(usersService);
 
     let options: Hapi.IServerInjectOptions = {
         method: "POST",
-        url: "/logout",
+        url: "/api/logout",
         credentials: {
             username: "FuckingyPrettyPinkyPrincess"
         }
@@ -109,7 +109,7 @@ test("LoginPlugin/login - With valid credentials - Should return token", functio
     //Act
     TestUtils.createTestServer(8989, [loginPlugin],
         ((err, server) => {
-            server.inject(options, function(response: any) {
+            server.inject(options, function (response: any) {
                 //Assert
                 t.equal(response.statusCode, 200, "Response: OK");
                 t.equal(response.result.result, 0, "Operation completed successfully");

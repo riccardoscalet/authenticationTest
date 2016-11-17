@@ -12,7 +12,7 @@ import { User, UsersService } from "../services/users.service";
  */
 export class UsersPlugin extends Plugin {
 
-    constructor(private usersService: UsersService, public options ? : any) {
+    constructor(private usersService: UsersService, public options?: any) {
         super(options, {
             name: 'usersPlugin',
             version: '1.0.0'
@@ -22,7 +22,7 @@ export class UsersPlugin extends Plugin {
     _register(server, options) {
         server.route({
             method: 'GET',
-            path: '/users',
+            path: '/api/users',
             config: {
                 auth: {
                     // Scope ensures this operation is available only to users with "admin" scope.
@@ -34,7 +34,7 @@ export class UsersPlugin extends Plugin {
 
         server.route({
             method: 'PUT',
-            path: '/users/{user}',
+            path: '/api/users/{user}',
             config: {
                 auth: {
                     scope: ["admin"]
@@ -55,7 +55,7 @@ export class UsersPlugin extends Plugin {
 
         server.route({
             method: 'DELETE',
-            path: '/users/{user}',
+            path: '/api/users/{user}',
             config: {
                 auth: {
                     scope: ["admin"]
@@ -71,7 +71,7 @@ export class UsersPlugin extends Plugin {
 
         server.route({
             method: 'POST',
-            path: '/password',
+            path: '/api/password',
             config: {
                 validate: {
                     payload: {
@@ -93,7 +93,7 @@ export class UsersPlugin extends Plugin {
      * @memberOf UsersPlugin
      */
     getAllUsers(request, reply) {
-        this.usersService.getAll(function(err, data) {
+        this.usersService.getAll(function (err, data) {
             if (err) {
                 return reply({
                     result: -1,
@@ -101,7 +101,7 @@ export class UsersPlugin extends Plugin {
                 });
             } else {
                 // Clears all passwords
-                let returnData = data.map(function(user, index) {
+                let returnData = data.map(function (user, index) {
                     user.password = undefined;
                     return user;
                 });
@@ -129,7 +129,7 @@ export class UsersPlugin extends Plugin {
             request.payload.email,
             request.payload.scope);
 
-        this.usersService.add(newUser, function(err) {
+        this.usersService.add(newUser, function (err) {
             if (err) return reply({
                 result: -1,
                 message: this.userService.errorCodeToMessage(-1)
@@ -153,7 +153,7 @@ export class UsersPlugin extends Plugin {
     deleteUser(request, reply) {
         let username = request.params.user;
 
-        this.usersService.remove(username, function(err) {
+        this.usersService.remove(username, function (err) {
             if (err) {
                 let message: string = `User removal failed. ` + this.usersService.errorCodeToMessage(err);
                 return reply({
@@ -187,7 +187,7 @@ export class UsersPlugin extends Plugin {
         // Sets the new password. This will be hashed by the UsersService.add function.
         let newPassword = request.payload.newPassword;
 
-        this.usersService.get(username, function(err, user) {
+        this.usersService.get(username, function (err, user) {
             if (err) return reply({
                 result: -1,
                 message: `Password change failed. ` + this.usersService.errorCodeToMessage(err)
@@ -197,7 +197,7 @@ export class UsersPlugin extends Plugin {
             user.password = newPassword;
 
             // Overwrites the existing user
-            self.usersService.add(user, function(err) {
+            self.usersService.add(user, function (err) {
                 if (err) {
                     let message: string = `Failed to change password. ` + this.usersService.errorCodeToMessage(err);
                     return reply({

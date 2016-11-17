@@ -33,7 +33,7 @@ test("UsersPlugin/users - With admin user scope - Should return all users withou
 
     let options: Hapi.IServerInjectOptions = {
         method: "GET",
-        url: "/users",
+        url: "/api/users",
         credentials: { scope: ["admin"] }
     }
 
@@ -63,7 +63,7 @@ test("UsersPlugin/users - With insufficient user scope - Should forbid call", fu
 
     let options: Hapi.IServerInjectOptions = {
         method: "GET",
-        url: "/users",
+        url: "/api/users",
         credentials: { scope: ["normal"] }
     }
 
@@ -88,7 +88,7 @@ test("UsersPlugin/users/abc PUT - Should add user", function(t) {
 
     let options: Hapi.IServerInjectOptions = {
         method: "PUT",
-        url: "/users/abc",
+        url: "/api/users/abc",
         payload: {
             password: "Asdrubale",
             email: "asdrubale69@gmail.com",
@@ -119,7 +119,7 @@ test("UsersPlugin/users/abc DELETE - Should remove user", function(t) {
 
     let options: Hapi.IServerInjectOptions = {
         method: "DELETE",
-        url: "/users/abc",
+        url: "/api/users/abc",
         credentials: { scope: ["admin"] }
     }
 
@@ -154,7 +154,7 @@ test("UsersPlugin/password - Should set a new password for calling user", functi
 
     let options: Hapi.IServerInjectOptions = {
         method: "POST",
-        url: "/password",
+        url: "/api/password",
         payload: {
             newPassword: newPassword
         },
