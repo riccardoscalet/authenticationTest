@@ -75,6 +75,7 @@ export class UsersPlugin extends Plugin {
             config: {
                 validate: {
                     payload: {
+                        oldPassword: Joi.string().required(),
                         newPassword: Joi.string().required()
                     }
                 },
@@ -93,7 +94,7 @@ export class UsersPlugin extends Plugin {
      * @memberOf UsersPlugin
      */
     getAllUsers(request, reply) {
-        this.usersService.getAll(function (err, data) {
+        this.usersService.getAll(function(err, data) {
             if (err) {
                 return reply({
                     result: -1,
@@ -101,7 +102,7 @@ export class UsersPlugin extends Plugin {
                 });
             } else {
                 // Clears all passwords
-                let returnData = data.map(function (user, index) {
+                let returnData = data.map(function(user, index) {
                     user.password = undefined;
                     return user;
                 });
@@ -129,7 +130,7 @@ export class UsersPlugin extends Plugin {
             request.payload.email,
             request.payload.scope);
 
-        this.usersService.add(newUser, function (err) {
+        this.usersService.add(newUser, function(err) {
             if (err) return reply({
                 result: -1,
                 message: this.userService.errorCodeToMessage(-1)
@@ -153,7 +154,7 @@ export class UsersPlugin extends Plugin {
     deleteUser(request, reply) {
         let username = request.params.user;
 
-        this.usersService.remove(username, function (err) {
+        this.usersService.remove(username, function(err) {
             if (err) {
                 let message: string = `User removal failed. ` + this.usersService.errorCodeToMessage(err);
                 return reply({
@@ -183,21 +184,20 @@ export class UsersPlugin extends Plugin {
         // Gets username from request.
         // (The token is valid, since the call arrived to this point).
         let username = request.auth.credentials.username;
-
-        // Sets the new password. This will be hashed by the UsersService.add function.
+        let oldPassword = request.payload.oldPassword;
         let newPassword = request.payload.newPassword;
 
-        this.usersService.get(username, function (err, user) {
+        this.usersService.validateCredentials(username, oldPassword, function(err, isValid, user) {
             if (err) return reply({
                 result: -1,
-                message: `Password change failed. ` + this.usersService.errorCodeToMessage(err)
+                message: `Password change failed. ` + self.usersService.errorCodeToMessage(err)
             });
 
-            // Sets the new password
+            // Sets the new password. This will be hashed by the UsersService.add function.
             user.password = newPassword;
 
             // Overwrites the existing user
-            self.usersService.add(user, function (err) {
+            self.usersService.add(user, function(err) {
                 if (err) {
                     let message: string = `Failed to change password. ` + this.usersService.errorCodeToMessage(err);
                     return reply({
