@@ -9,7 +9,7 @@ import * as clone from "clone";
  */
 export class UsersService {
 
-    constructor(private db: LevelUp) {}
+    constructor(private db: LevelUp) { }
 
 
     /**
@@ -20,7 +20,7 @@ export class UsersService {
      * 
      * @memberOf UsersService
      */
-    get(username: string, callback: (err: any, user ? : User) => void): void {
+    get(username: string, callback: (err: any, user?: User) => void): void {
         this.db.get(username, function(err, user) {
             if (err) {
                 console.log(`ERROR - UsersService.get - ${err}`);
@@ -82,7 +82,7 @@ export class UsersService {
      * 
      * @memberOf UsersService
      */
-    getAll(callback: (err: any[], data ? : User[]) => void): void {
+    getAll(callback: (err: any[], data?: User[]) => void): void {
         let errors = [];
         let returnData = [];
         this.db.createValueStream()
@@ -109,7 +109,7 @@ export class UsersService {
     validateCredentials(
         username: string,
         password: string,
-        callback: (err: number, isValid: boolean, user ? : User) => void): void {
+        callback: (err: number, isValid: boolean, user?: User) => void): void {
 
         this.get(username, function(err, user: User) {
             if (err) return callback(err, false);
